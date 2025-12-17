@@ -21,6 +21,8 @@ Linux) PLATFORM="linux" ;;
 	;;
 esac
 
+echo "Platform: $PLATFORM"
+
 # ===========================
 # DOCKER DETECTION
 # ===========================
@@ -48,10 +50,11 @@ fi
 # ===========================
 # UPDATE BREW
 # ===========================
+echo "Updating Homebrew..."
 brew update
 
 # ===========================
-# INSTALL FROM BREWFILE ONLY
+# INSTALL FROM BREWFILE
 # ===========================
 if [ -f "$BREWFILE" ]; then
 	echo "Installing packages from Brewfile..."
@@ -62,32 +65,41 @@ else
 fi
 
 # ===========================
-# STOW DOTFILES (if stow is in Brewfile)
+# STOW DOTFILES
 # ===========================
 if command -v stow &>/dev/null && [ -d "$DOTFILES_DIR" ]; then
 	cd "$DOTFILES_DIR"
-
+	echo ""
+	echo "Stowing dotfiles..."
 	for pkg in */; do
 		pkg="${pkg%/}"
-		echo "Stowing $pkg..."
-		stow "$pkg"
+		# Skip misc directory
+		if [ "$pkg" = "misc" ]; then
+			continue
+		fi
+		echo "  Stowing $pkg..."
+		stow "$pkg" 2>/dev/null || echo "  Warning: Failed to stow $pkg"
 	done
 else
 	echo "Skipping stow (not installed or dotfiles missing)"
 fi
 
 # ===========================
-# SHELL HANDLING (OPTIONAL)
+# SHELL HANDLING
 # ===========================
 if command -v zsh &>/dev/null && ! is_docker; then
 	ZSH_PATH="$(command -v zsh)"
 
-	if ! grep -q "$ZSH_PATH" /etc/shells; then
+	# Add zsh to /etc/shells if needed
+	if ! grep -q "$ZSH_PATH" /etc/shells 2>/dev/null; then
+		echo ""
 		echo "Adding zsh to /etc/shells (sudo required)"
 		echo "$ZSH_PATH" | sudo tee -a /etc/shells
 	fi
 
+	# Change shell if needed
 	if [ "$SHELL" != "$ZSH_PATH" ]; then
+		echo "Changing default shell to zsh..."
 		chsh -s "$ZSH_PATH"
 	fi
 else
@@ -101,4 +113,5 @@ if is_docker && command -v zsh &>/dev/null; then
 	exec zsh
 fi
 
-echo "✅ Setup complete"
+echo ""
+echo "✅ Setup complete for $PLATFORM"
