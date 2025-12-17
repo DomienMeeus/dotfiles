@@ -7,28 +7,25 @@ set -euo pipefail
 DOTFILES_DIR="$HOME/.dotfiles"
 BREWFILE="$DOTFILES_DIR/misc/Brewfile"
 
-is_docker() {
-	[ -f /.dockerenv ] || grep -qE '(docker|containerd)' /proc/1/cgroup 2>/dev/null
-}
 # ===========================
 # OS DETECTION
 # ===========================
 OS="$(uname -s)"
-
 case "$OS" in
-Darwin)
-	PLATFORM="macos"
-	;;
-Linux)
-	PLATFORM="linux"
-	;;
+Darwin) PLATFORM="macos" ;;
+Linux) PLATFORM="linux" ;;
 *)
 	echo "Unsupported OS: $OS"
 	exit 1
 	;;
 esac
 
-echo "Detected platform: $PLATFORM"
+# ===========================
+# DOCKER DETECTION
+# ===========================
+is_docker() {
+	[ -f /.dockerenv ] || grep -qE '(docker|containerd)' /proc/1/cgroup 2>/dev/null
+}
 
 # ===========================
 # INSTALL HOMEBREW
@@ -36,31 +33,15 @@ echo "Detected platform: $PLATFORM"
 if ! command -v brew &>/dev/null; then
 	echo "Installing Homebrew..."
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-else
-	echo "Homebrew already installed."
 fi
 
 # ===========================
-# ENSURE BREW IN PATH
+# LOAD BREW ENV
 # ===========================
 if [ "$PLATFORM" = "linux" ]; then
-	BREW_PREFIX="/home/linuxbrew/.linuxbrew"
+	eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 else
-	BREW_PREFIX="/opt/homebrew"
-fi
-
-if ! command -v brew &>/dev/null; then
-	echo "Adding Homebrew to PATH..."
-	eval "$("$BREW_PREFIX/bin/brew" shellenv)"
-fi
-if [ "$PLATFORM" = "linux" ]; then
-	BREW_ENV='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
-
-	for file in "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc"; do
-		if [ -f "$file" ] && ! grep -q "linuxbrew" "$file"; then
-			echo "$BREW_ENV" >>"$file"
-		fi
-	done
+	eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
 # ===========================
@@ -69,44 +50,20 @@ fi
 brew update
 
 # ===========================
-# INSTALL ESSENTIALS
-# ===========================
-brew install stow zsh git curl
-
-# ===========================
-# SET ZSH AS DEFAULT SHELL
-# ===========================
-ZSH_PATH="$(brew --prefix)/bin/zsh"
-
-if is_docker; then
-	echo "Docker detected — skipping shell changes"
-else
-	if ! grep -q "$ZSH_PATH" /etc/shells; then
-		echo "Adding zsh to /etc/shells (sudo required)"
-		echo "$ZSH_PATH" | sudo tee -a /etc/shells
-	fi
-
-	if [ "$SHELL" != "$ZSH_PATH" ]; then
-		echo "Setting zsh as default shell..."
-		chsh -s "$ZSH_PATH"
-	fi
-fi
-
-# ===========================
-# INSTALL FROM BREWFILE
+# INSTALL FROM BREWFILE ONLY
 # ===========================
 if [ -f "$BREWFILE" ]; then
 	echo "Installing packages from Brewfile..."
 	brew bundle --file="$BREWFILE"
 else
-	echo "No Brewfile found at $BREWFILE"
+	echo "Brewfile not found at $BREWFILE"
+	exit 1
 fi
 
 # ===========================
-# STOW DOTFILES
+# STOW DOTFILES (if stow is in Brewfile)
 # ===========================
-if [ -d "$DOTFILES_DIR" ]; then
-	echo "Stowing dotfiles..."
+if command -v stow &>/dev/null && [ -d "$DOTFILES_DIR" ]; then
 	cd "$DOTFILES_DIR"
 
 	for pkg in */; do
@@ -115,14 +72,32 @@ if [ -d "$DOTFILES_DIR" ]; then
 		stow "$pkg"
 	done
 else
-	echo "Dotfiles directory not found: $DOTFILES_DIR"
+	echo "Skipping stow (not installed or dotfiles missing)"
 fi
 
-if is_docker; then
-	echo "Starting zsh..."
-	exec /home/linuxbrew/.linuxbrew/bin/zsh
+# ===========================
+# SHELL HANDLING (OPTIONAL)
+# ===========================
+if command -v zsh &>/dev/null && ! is_docker; then
+	ZSH_PATH="$(command -v zsh)"
+
+	if ! grep -q "$ZSH_PATH" /etc/shells; then
+		echo "Adding zsh to /etc/shells (sudo required)"
+		echo "$ZSH_PATH" | sudo tee -a /etc/shells
+	fi
+
+	if [ "$SHELL" != "$ZSH_PATH" ]; then
+		chsh -s "$ZSH_PATH"
+	fi
+else
+	echo "Skipping shell setup"
 fi
+
 # ===========================
-# DONE
+# DOCKER: EXEC ZSH IF PRESENT
 # ===========================
-echo "✅ Setup complete! Restart your terminal to start using zsh."
+if is_docker && command -v zsh &>/dev/null; then
+	exec zsh
+fi
+
+echo "✅ Setup complete"
