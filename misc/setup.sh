@@ -4,7 +4,8 @@ set -euo pipefail
 # ===========================
 # CONFIG
 # ===========================
-DOTFILES_DIR="$HOME/.dotfiles"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+DOTFILES_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BREWFILE="$DOTFILES_DIR/misc/Brewfile"
 
 # ===========================
