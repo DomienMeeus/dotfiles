@@ -1,0 +1,237 @@
+# Reference: https://github.com/i3/i3/blob/next/etc/config
+
+# i3 doesn't have "normalizations" feature that why we disable them here.
+# But the feature is very helpful.
+# Normalizations eliminate all sorts of weird tree configurations that don't make sense.
+# Give normalizations a chance and enable them back.
+enable-normalization-flatten-containers = false
+enable-normalization-opposite-orientation-for-nested-containers = false
+
+# Mouse follows focus when focused monitor changes
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+start-at-login = true
+
+after-startup-command = [
+    # JankyBorders has a built-in detection of already running process,
+    # so it won't be run twice on AeroSpace restart
+    'exec-and-forget borders active_color=0xfff6c177 inactive_color=0xff31748f width=5.0'
+]
+
+# window gaps
+[gaps]
+    inner.horizontal = 15
+    inner.vertical =   15
+    outer.left = 10
+    outer.bottom = 10
+    outer.top = 10
+    outer.right = 10
+
+[mode.main.binding]
+    # See: https://nikitabobko.github.io/AeroSpace/goodies#open-a-new-window-with-applescript
+    alt-enter = '''exec-and-forget osascript -e '
+    tell application "Terminal"
+        do script
+        activate
+    end tell'
+    '''
+
+    # i3 wraps focus by default
+    alt-h =         'focus --boundaries-action wrap-around-the-workspace left'
+    alt-j =         'focus --boundaries-action wrap-around-the-workspace down'
+    alt-k =         'focus --boundaries-action wrap-around-the-workspace up'
+    alt-l = 'focus --boundaries-action wrap-around-the-workspace right'
+
+    alt-shift-h = 'move left'
+    alt-shift-j = 'move down'
+    alt-shift-k = 'move up'
+    alt-shift-l = 'move right'
+
+    # Consider using 'join-with' command as a 'split' replacement if you want to enable
+    # normalizations
+    alt-c = 'split horizontal'
+    alt-v = 'split vertical'
+
+    alt-f = 'fullscreen'
+
+    # alt-s = 'layout v_accordion' # 'layout stacking' in i3
+    # alt-w = 'layout h_accordion' # 'layout tabbed' in i3
+    alt-e = 'layout tiles horizontal vertical' # 'layout toggle split' in i3
+
+    alt-shift-space = 'layout floating tiling' # 'floating toggle' in i3
+
+    # Not supported, because this command is redundant in AeroSpace mental model.
+    # See: https://nikitabobko.github.io/AeroSpace/guide#floating-windows
+    #alt-space = 'focus toggle_tiling_floating'
+
+    # `focus parent`/`focus child` are not yet supported, and it's not clear whether they
+    # should be supported at all https://github.com/nikitabobko/AeroSpace/issues/5
+    # alt-a = 'focus parent'
+
+    alt-1 = 'workspace 1'
+    alt-2 = 'workspace 2'
+    alt-3 = 'workspace 3'
+    alt-4 = 'workspace 4'
+    alt-5 = 'workspace 5'
+    alt-6 = 'workspace 6'
+    alt-7 = 'workspace 7'
+    alt-8 = 'workspace 8'
+    alt-9 = 'workspace 9'
+    alt-y = 'workspace y'
+    alt-u = 'workspace u'
+    alt-i = 'workspace i'
+    alt-o = 'workspace o'
+    alt-p = 'workspace p'
+    alt-g = 'workspace g'
+
+    alt-shift-1 = 'move-node-to-workspace 1'
+    alt-shift-2 = 'move-node-to-workspace 2'
+    alt-shift-3 = 'move-node-to-workspace 3'
+    alt-shift-4 = 'move-node-to-workspace 4'
+    alt-shift-5 = 'move-node-to-workspace 5'
+    alt-shift-6 = 'move-node-to-workspace 6'
+    alt-shift-7 = 'move-node-to-workspace 7'
+    alt-shift-8 = 'move-node-to-workspace 8'
+    alt-shift-9 = 'move-node-to-workspace 9'
+    alt-shift-0 = 'move-node-to-workspace 10'
+    alt-shift-u = 'move-node-to-workspace u'
+    alt-shift-i = 'move-node-to-workspace i'
+    alt-shift-o = 'move-node-to-workspace o'
+    alt-shift-p = 'move-node-to-workspace p'
+    alt-shift-y = 'move-node-to-workspace y'
+    alt-shift-g = 'move-node-to-workspace g'
+
+    alt-shift-c = 'reload-config'
+
+    alt-r = 'mode resize'
+    alt-n = 'move-workspace-to-monitor --wrap-around next'    
+    alt-m = 'move-workspace-to-monitor --wrap-around prev'    
+
+
+[mode.resize.binding]
+    h = 'resize width -50'
+    j = 'resize height -50'
+    k = 'resize height +50'
+    l = 'resize width +50'
+    enter = 'mode main'
+    esc = 'mode main'
+
+# configure default workspace for apps
+
+
+## Workspace y: AI
+[[on-window-detected]]
+  if.app-id = "com.openai.chat"
+  run = "move-node-to-workspace y" 
+
+[[on-window-detected]]
+  if.app-id = "com.anthropic.claudefordesktop"
+  run = "move-node-to-workspace y" 
+
+[[on-window-detected]]
+  if.app-id = "dev.warp.Warp-Stable"
+  run = "move-node-to-workspace y" 
+
+### Workspace u: Browsers
+[[on-window-detected]]
+  if.app-id =  "app.zen-browser.zen" 
+  run = "move-node-to-workspace u" 
+
+
+### Workspace o: Terminals
+
+[[on-window-detected]]
+  if.app-id = "com.github.wez.wezterm"
+  run = "move-node-to-workspace o" 
+
+
+## Workspace p: Testing/Debug
+[[on-window-detected]]
+  if.app-id = "org.mozilla.firefoxdeveloperedition"
+  run = "move-node-to-workspace p" 
+[[on-window-detected]]
+  if.app-id = "com.google.Chrome"
+  run = "move-node-to-workspace p" 
+
+### Workspace 1: Mail
+[[on-window-detected]]
+  if.app-id = "com.microsoft.Outlook"
+  run = "move-node-to-workspace 1" 
+[[on-window-detected]]
+  if.app-id = "com.apple.mail"
+  run = "move-node-to-workspace 1" 
+
+### Workspace 2: Chat
+
+[[on-window-detected]]
+if.app-id = "com.tinyspeck.slackmacgap"
+run = "move-node-to-workspace 2" 
+
+[[on-window-detected]]
+if.app-id = "com.microsoft.teams2"
+run = "move-node-to-workspace 2" 
+
+[[on-window-detected]]
+if.app-id = "com.facebook.archon"
+run = "move-node-to-workspace 2" 
+
+[[on-window-detected]]
+if.app-id = "com.hnc.Discord"
+run = "move-node-to-workspace 2" 
+
+[[on-window-detected]]
+if.app-id = "com.apple.MobileSMS"
+run = "move-node-to-workspace 2" 
+
+
+### Workspace 3: Calendar
+[[on-window-detected]]
+  if.app-id = "com.apple.iCal"
+  run = "move-node-to-workspace 3" 
+
+## Workspace 4: Notion etc
+[[on-window-detected]]
+  if.app-id = "notion.id"
+  run = "move-node-to-workspace 4" 
+[[on-window-detected]]
+  if.app-id = "md.obsidian"
+  run = "move-node-to-workspace 4" 
+[[on-window-detected]]
+  if.app-id = "com.apple.Notes"
+  run = "move-node-to-workspace 4" 
+
+### Workspace 5: Music
+[[on-window-detected]]
+if.app-id = "com.spotify.client"
+run = "move-node-to-workspace 5" 
+
+### Workspace 6: Journal
+[[on-window-detected]]
+if.app-id = "com.apple.journal"
+run = "move-node-to-workspace 6" 
+
+
+### Workspace 7: Todoist
+[[on-window-detected]]
+  if.app-id = "com.todoist.mac.Todoist"
+  run = "move-node-to-workspace 7" 
+
+## Workspace 8: Rider
+  [[on-window-detected]]
+  if.app-id = "com.jetbrains.rider"
+  run = "move-node-to-workspace 8" 
+
+## Workspace 9: VM
+  [[on-window-detected]]
+  if.app-id = "com.parallels.desktop.console"
+  run = "move-node-to-workspace 9" 
+
+
+## Catch all 
+
+[[on-window-detected]]
+  run = "move-node-to-workspace g" 
+
+
+# Assign workspace to monitor (Workspace monitor can't be changed after)
+[workspace-to-monitor-force-assignment]
+

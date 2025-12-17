@@ -1,0 +1,16 @@
+[user]
+	name = zl-domien-meeus
+	email = domien.meeus@zinderlabs.com
+[core]
+	autocrlf = input
+	editor = nvim -f
+[merge]
+  tool = nvim
+[mergetool "nvim"]
+  cmd = nvim -c "DiffviewOpen"
+[mergetool]
+  prompt = false
+[init]
+	defaultBranch = main
+[pull]
+	rebase = true
