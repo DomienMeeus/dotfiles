@@ -7,6 +7,9 @@ set -euo pipefail
 DOTFILES_DIR="$HOME/.dotfiles"
 BREWFILE="$DOTFILES_DIR/misc/Brewfile"
 
+is_docker() {
+	[ -f /.dockerenv ] || grep -qE '(docker|containerd)' /proc/1/cgroup 2>/dev/null
+}
 # ===========================
 # OS DETECTION
 # ===========================
@@ -75,16 +78,18 @@ brew install stow zsh git curl
 # ===========================
 ZSH_PATH="$(brew --prefix)/bin/zsh"
 
-if ! grep -q "$ZSH_PATH" /etc/shells; then
-	echo "Adding zsh to /etc/shells (sudo required)"
-	echo "$ZSH_PATH" | sudo tee -a /etc/shells
-fi
-
-if [ "$SHELL" != "$ZSH_PATH" ]; then
-	echo "Setting zsh as default shell..."
-	chsh -s "$ZSH_PATH"
+if is_docker; then
+	echo "Docker detected — skipping shell changes"
 else
-	echo "zsh is already the default shell."
+	if ! grep -q "$ZSH_PATH" /etc/shells; then
+		echo "Adding zsh to /etc/shells (sudo required)"
+		echo "$ZSH_PATH" | sudo tee -a /etc/shells
+	fi
+
+	if [ "$SHELL" != "$ZSH_PATH" ]; then
+		echo "Setting zsh as default shell..."
+		chsh -s "$ZSH_PATH"
+	fi
 fi
 
 # ===========================
@@ -113,6 +118,10 @@ else
 	echo "Dotfiles directory not found: $DOTFILES_DIR"
 fi
 
+if is_docker; then
+	echo "Starting zsh..."
+	exec /home/linuxbrew/.linuxbrew/bin/zsh
+fi
 # ===========================
 # DONE
 # ===========================
