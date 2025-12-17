@@ -39,12 +39,45 @@ if ! command -v brew &>/dev/null; then
 fi
 
 # ===========================
-# LOAD BREW ENV
+# LOAD BREW ENV & ADD TO SHELL
 # ===========================
 if [ "$PLATFORM" = "linux" ]; then
-	eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+	BREW_PREFIX="/home/linuxbrew/.linuxbrew"
+	eval "$($BREW_PREFIX/bin/brew shellenv)"
+
+	# Add to shell config files if not already present
+	BREW_INIT='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
+
+	for rcfile in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.config/fish/config.fish"; do
+		if [ -f "$rcfile" ]; then
+			if ! grep -q "linuxbrew" "$rcfile"; then
+				echo "" >>"$rcfile"
+				echo "# Homebrew" >>"$rcfile"
+				if [[ "$rcfile" == *"fish"* ]]; then
+					echo 'eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv)' >>"$rcfile"
+				else
+					echo "$BREW_INIT" >>"$rcfile"
+				fi
+				echo "Added Homebrew to $rcfile"
+			fi
+		fi
+	done
 else
 	eval "$(/opt/homebrew/bin/brew shellenv)"
+
+	# Add to shell config files on macOS if not already present
+	BREW_INIT='eval "$(/opt/homebrew/bin/brew shellenv)"'
+
+	for rcfile in "$HOME/.zprofile" "$HOME/.bash_profile"; do
+		if [ -f "$rcfile" ]; then
+			if ! grep -q "/opt/homebrew/bin/brew shellenv" "$rcfile"; then
+				echo "" >>"$rcfile"
+				echo "# Homebrew" >>"$rcfile"
+				echo "$BREW_INIT" >>"$rcfile"
+				echo "Added Homebrew to $rcfile"
+			fi
+		fi
+	done
 fi
 
 # ===========================
@@ -89,6 +122,21 @@ fi
 # ===========================
 if command -v zsh &>/dev/null && ! is_docker; then
 	ZSH_PATH="$(command -v zsh)"
+
+	# Install oh-my-zsh if referenced in config but not installed
+	if [ ! -d "$HOME/.oh-my-zsh" ]; then
+		if grep -q "oh-my-zsh" "$HOME/.zshrc" 2>/dev/null; then
+			echo ""
+			echo "Installing oh-my-zsh..."
+			sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+		fi
+	fi
+
+	# Install zsh-syntax-highlighting if available via brew
+	if ! brew list zsh-syntax-highlighting &>/dev/null; then
+		echo "Installing zsh-syntax-highlighting..."
+		brew install zsh-syntax-highlighting
+	fi
 
 	# Add zsh to /etc/shells if needed
 	if ! grep -q "$ZSH_PATH" /etc/shells 2>/dev/null; then
