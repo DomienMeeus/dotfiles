@@ -50,6 +50,15 @@ if ! command -v brew &>/dev/null; then
 	echo "Adding Homebrew to PATH..."
 	eval "$("$BREW_PREFIX/bin/brew" shellenv)"
 fi
+if [ "$PLATFORM" = "linux" ]; then
+	BREW_ENV='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
+
+	for file in "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc"; do
+		if [ -f "$file" ] && ! grep -q "linuxbrew" "$file"; then
+			echo "$BREW_ENV" >>"$file"
+		fi
+	done
+fi
 
 # ===========================
 # UPDATE BREW
