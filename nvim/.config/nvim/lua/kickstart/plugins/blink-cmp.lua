@@ -1,7 +1,7 @@
 return {
   { -- Autocompletion
     'saghen/blink.cmp',
-    event = 'VimEnter',
+
     version = '1.*',
     dependencies = {
       -- Snippet Engine
@@ -21,12 +21,12 @@ return {
           -- `friendly-snippets` contains a variety of premade snippets.
           --    See the README about individual language/framework/plugin snippets:
           --    https://github.com/rafamadriz/friendly-snippets
-          -- {
-          --   'rafamadriz/friendly-snippets',
-          --   config = function()
-          --     require('luasnip.loaders.from_vscode').lazy_load()
-          --   end,
-          -- },
+          {
+            'rafamadriz/friendly-snippets',
+            config = function()
+              require('luasnip.loaders.from_vscode').lazy_load()
+            end,
+          },
         },
         opts = {},
       },
@@ -57,8 +57,24 @@ return {
         -- <c-k>: Toggle signature help
         --
         -- See :h blink-cmp-config-keymap for defining your own keymap
-        preset = 'super-tab',
+        preset = 'default',
 
+        accept = { auto_brackets = { enabled = true } },
+        keyword = { range = 'full' },
+        documentation = { auto_show = true, auto_show_delay_ms = 300 },
+        sources = {
+          -- Remove 'buffer' if you don't want text completions, by default it's only enabled when LSP returns no items
+          default = { 'lsp', 'path', 'snippets' },
+          providers = {
+            snippets = {
+              opts = {
+                friendly_snippets = true,
+              },
+            },
+          },
+        },
+
+        signature = { enabled = true },
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
       },
@@ -68,14 +84,38 @@ return {
         -- Adjusts spacing to ensure icons are aligned
         nerd_font_variant = 'mono',
       },
-
       completion = {
         -- By default, you may press `<c-space>` to show the documentation.
         -- Optionally, set `auto_show = true` to show the documentation after a delay.
-        documentation = { auto_show = false, auto_show_delay_ms = 500 },
+        ghost_text = {
+          enabled = true,
+        },
+        documentation = {
+          auto_show = true,
+          auto_show_delay_ms = 50,
+
+          window = {
+            border = 'rounded',
+          },
+        },
+        menu = {
+          border = 'rounded',
+        },
+        trigger = {
+          show_on_trigger_character = true,
+          show_on_keyword = true,
+          show_on_blocked_trigger_characters = {},
+        },
+        list = {
+          selection = {
+            preselect = true,
+            auto_insert = false,
+          },
+        },
       },
 
       sources = {
+
         default = { 'lsp', 'path', 'snippets', 'lazydev', 'easy-dotnet' },
         providers = {
           lazydev = { module = 'lazydev.integrations.blink', score_offset = 100 },
@@ -84,6 +124,15 @@ return {
             module = 'easy-dotnet.completion.blink',
             score_offset = 10000,
             async = true,
+          },
+          lsp = {
+            override = {
+              get_trigger_characters = function(self)
+                local trigger_characters = self:get_trigger_characters()
+                vim.list_extend(trigger_characters, { '\n', '\t', ' ' })
+                return trigger_characters
+              end,
+            },
           },
         },
       },
@@ -104,4 +153,4 @@ return {
     },
   },
 }
--- vim: ts=2 sts=2 sw=2 et
+-- vim: ts=2 sts=2 sw=2
