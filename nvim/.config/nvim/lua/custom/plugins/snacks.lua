@@ -109,7 +109,7 @@ return {
       desc = 'Find Config File',
     },
     {
-      '<leader>ff',
+      '<leader>fd',
       function()
         Snacks.picker.files()
       end,
@@ -474,7 +474,7 @@ return {
       mode = { 'n', 'v' },
     },
     {
-      '<leader>gg',
+      '<leader>G',
       function()
         Snacks.lazygit()
       end,
